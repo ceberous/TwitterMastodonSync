@@ -41,7 +41,7 @@ function POST_SLACK_ERROR( wStatus ) {
 				try { wStatus = wStatus.toString(); }
 				catch( e ) { wStatus = e; }
 			}
-			await slackClient.post( wStatus , "#msync-err" );
+			await SLACK_POST_MESSAGE.post( wStatus , "#msync-err" );
 			resolve();
 		}
 		catch( error ) { console.log( error ); reject( error ); }
