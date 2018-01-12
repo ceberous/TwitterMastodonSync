@@ -22,6 +22,32 @@ function MASTODON_POST_STATUS( wClient , wStatus ) {
 	});
 }
 
+const Slack = require( "slack" );
+var bot = null;
+const wToken = require( "./personal.js" ).SLACK_TOKEN;
+function SLACK_POST_MESSAGE( wMessage , wChannel ) {
+	return new Promise( async function( resolve , reject ) {
+		try {
+			await bot.chat.postMessage( { token: wToken , channel: wChannel , text: wMessage  } );
+			resolve();
+		}
+		catch( error ) { console.log( error ); reject( error ); }
+	});
+}
+function POST_SLACK_ERROR( wStatus ) {
+	return new Promise( async function( resolve , reject ) {
+		try {
+			if ( typeof wStatus !== "string" ) {
+				try { wStatus = wStatus.toString(); }
+				catch( e ) { wStatus = e; }
+			}
+			await slackClient.post( wStatus , "#msync-err" );
+			resolve();
+		}
+		catch( error ) { console.log( error ); reject( error ); }
+	});
+}
+
 const resolver = require( "resolver" );
 function RESOLVE_LINK( wURL ) {
 	return new Promise( async function( resolve , reject ) {
@@ -42,7 +68,7 @@ function SCAN_TEXT_AND_RESOLVE_LINKS( wText ) {
 			var wFinal = "";
 			wText = wText.split( " " );
 			for ( var i = 0; i < wText.length; ++i ) {
-				const x1_idx = wText[ i ].indexOf( "https://t.co/" ); 
+				const x1_idx = wText[ i ].indexOf( "http" ); 
 				if ( x1_idx !== -1 ) {
 					console.log( "We Found a Short Link" );
 					console.log( wText[ i ] );
@@ -68,7 +94,8 @@ function FORMAT_STATUS_SELF_TIMELINE( wStatus ) {
 				finalStatus = finalStatus + TWITTER_STATUS_BASE + wStatus.retweeted_status.user.screen_name + TWITTER_STATUS_BASE_P2 + wStatus.retweeted_status.id_str;
 			}
 			else {
-				finalStatus = finalStatus + wStatus.text + " ";
+				const wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.text );
+				finalStatus = finalStatus + wText + " ";				
 			}
 			resolve( finalStatus );
 		}
@@ -88,7 +115,8 @@ function FORMAT_STATUS_FOLLOWERS_TIMELINE( wStatus ) {
 			}
 			else {
 				finalStatus = finalStatus + "@" + wStatus.user.screen_name + " ";
-				finalStatus = finalStatus + wStatus.text + " ";
+				const wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.text );
+				finalStatus = finalStatus + wText + " ";
 				finalStatus = finalStatus + TWITTER_STATUS_BASE + wStatus.user.screen_name + TWITTER_STATUS_BASE_P2 + wStatus.id_str;
 			}
 			resolve( finalStatus );
@@ -104,6 +132,7 @@ function MASTODON_POST_SELF_TIMELINE( wStatus ) {
 			console.log( "\n" + "SELF-TIMELINE\n" );
 			console.log( NewStatus );
 			await MASTODON_POST_STATUS( wMastadonSelfClient , NewStatus );
+			await SLACK_POST_MESSAGE( wStatus , "#msync" );
 			resolve();
 		}
 		catch( error ) { console.log( error ); reject( error ); }
@@ -127,18 +156,19 @@ function MASTODON_POST_FOLLOWERS_TIMELINE( wStatus ) {
 
 	wMastadonSelfClient = new Masto( MastoSelfCreds );
 	wMastadonFollowerClient = new Masto( MastoFollowerCreds );
+	bot = await new Slack( { wToken } );
 
 	process.on( "unhandledRejection" , function( reason , p ) {
 		var xPrps = Object.keys( reason );
 		console.log( xPrps );
 		console.error( reason , "Unhandled Rejection at Promise" , p );
 		console.trace();
-		//POST_SLACK_ERROR( reason );
+		POST_SLACK_ERROR( reason );
 	});
 	process.on( "uncaughtException" , function( err ) {
 		console.error( err , "Uncaught Exception thrown" );
 		console.trace();
-		//POST_SLACK_ERROR( err );
+		POST_SLACK_ERROR( err );
 	});
 	
 	twit.stream( "user" , function( stream ) {
