@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "mastodon": "^1.2.1",
-    "ntwitter": "^0.5.0"
+    "ntwitter": "^0.5.0",
+    "resolver": "^0.1.12"
   }
 }

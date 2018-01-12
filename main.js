@@ -1,4 +1,3 @@
-
 const twitter = require( "ntwitter" );
 const TwitterCreds = require( "./personal.js" ).twitter_creds;
 const twit = new twitter( TwitterCreds );
@@ -23,52 +22,124 @@ function MASTODON_POST_STATUS( wClient , wStatus ) {
 	});
 }
 
+const resolver = require( "resolver" );
+function RESOLVE_LINK( wURL ) {
+	return new Promise( async function( resolve , reject ) {
+		try {
+			resolver.resolve( wURL , function( err , url , filename , contentType ) {
+				if ( !err ) { resolve( url ); }
+				else { resolve( wURL ); }
+			});
+		}
+		catch( error ) { console.log( error ); reject( error ); }
+	});
+}
+
+function SCAN_TEXT_AND_RESOLVE_LINKS( wText ) {
+	return new Promise( async function( resolve , reject ) {
+		try {
+			if ( !wText ) { resolve( "" ); return; }
+			var wFinal = "";
+			wText = wText.split( " " );
+			for ( var i = 0; i < wText.length; ++i ) {
+				const x1_idx = wText[ i ].indexOf( "https://t.co/" ); 
+				if ( x1_idx !== -1 ) {
+					console.log( "We Found a Short Link" );
+					console.log( wText[ i ] );
+					wText[ i ] = await RESOLVE_LINK( wText[ i ] );
+					console.log( wText[ i ] );
+				}
+				wFinal = wFinal + wText[ i ] + " ";
+			}
+			resolve( wFinal );
+		}
+		catch( error ) { console.log( error ); reject( error ); }
+	});
+}
+
 function FORMAT_STATUS_SELF_TIMELINE( wStatus ) {
-	var finalStatus = "";
-	if ( wStatus.retweeted_status ) {
-		finalStatus = finalStatus + "@" + wStatus.retweeted_status.user.screen_name + " ";
-		finalStatus = finalStatus + wStatus.retweeted_status.text + " ";
-		finalStatus = finalStatus + TWITTER_STATUS_BASE + wStatus.retweeted_status.user.screen_name + TWITTER_STATUS_BASE_P2 + wStatus.retweeted_status.id_str;
-	}
-	else {
-		finalStatus = finalStatus + wStatus.text + " ";
-	}
-	return finalStatus;
+	return new Promise( async function( resolve , reject ) {
+		try {
+			var finalStatus = "";
+			if ( wStatus.retweeted_status ) {
+				finalStatus = finalStatus + "@" + wStatus.retweeted_status.user.screen_name + " ";
+				const wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.retweeted_status.text );
+				finalStatus = finalStatus + wText + " ";
+				finalStatus = finalStatus + TWITTER_STATUS_BASE + wStatus.retweeted_status.user.screen_name + TWITTER_STATUS_BASE_P2 + wStatus.retweeted_status.id_str;
+			}
+			else {
+				finalStatus = finalStatus + wStatus.text + " ";
+			}
+			resolve( finalStatus );
+		}
+		catch( error ) { console.log( error ); reject( error ); }
+	});
 }
 
 function FORMAT_STATUS_FOLLOWERS_TIMELINE( wStatus ) {
-	var finalStatus = "";
-	if ( wStatus.retweeted_status ) {
-		finalStatus = finalStatus + "@" + wStatus.retweeted_status.user.screen_name + " ";
-		finalStatus = finalStatus + wStatus.retweeted_status.text + " ";
-		finalStatus = finalStatus + TWITTER_STATUS_BASE + wStatus.retweeted_status.user.screen_name + TWITTER_STATUS_BASE_P2 + wStatus.retweeted_status.id_str;
-	}
-	else {
-		finalStatus = finalStatus + "@" + wStatus.user.screen_name + " ";
-		finalStatus = finalStatus + wStatus.text + " ";
-		finalStatus = finalStatus + TWITTER_STATUS_BASE + wStatus.user.screen_name + TWITTER_STATUS_BASE_P2 + wStatus.id_str;
-	}
-	return finalStatus;
+	return new Promise( async function( resolve , reject ) {
+		try {
+			var finalStatus = "";
+			if ( wStatus.retweeted_status ) {
+				finalStatus = finalStatus + "@" + wStatus.retweeted_status.user.screen_name + " ";
+				const wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.retweeted_status.text );
+				finalStatus = finalStatus + wText + " ";
+				finalStatus = finalStatus + TWITTER_STATUS_BASE + wStatus.retweeted_status.user.screen_name + TWITTER_STATUS_BASE_P2 + wStatus.retweeted_status.id_str;
+			}
+			else {
+				finalStatus = finalStatus + "@" + wStatus.user.screen_name + " ";
+				finalStatus = finalStatus + wStatus.text + " ";
+				finalStatus = finalStatus + TWITTER_STATUS_BASE + wStatus.user.screen_name + TWITTER_STATUS_BASE_P2 + wStatus.id_str;
+			}
+			resolve( finalStatus );
+		}
+		catch( error ) { console.log( error ); reject( error ); }
+	});
 }
 
 function MASTODON_POST_SELF_TIMELINE( wStatus ) {
-	const NewStatus = FORMAT_STATUS_SELF_TIMELINE( wStatus );
-	console.log( "\n" + "SELF-TIMELINE\n" );
-	console.log( NewStatus );
-	MASTODON_POST_STATUS( wMastadonSelfClient , NewStatus );
+	return new Promise( async function( resolve , reject ) {
+		try {
+			const NewStatus = await FORMAT_STATUS_SELF_TIMELINE( wStatus );
+			console.log( "\n" + "SELF-TIMELINE\n" );
+			console.log( NewStatus );
+			await MASTODON_POST_STATUS( wMastadonSelfClient , NewStatus );
+			resolve();
+		}
+		catch( error ) { console.log( error ); reject( error ); }
+	});
 }
 
 function MASTODON_POST_FOLLOWERS_TIMELINE( wStatus ) {
-	const NewStatus = FORMAT_STATUS_FOLLOWERS_TIMELINE( wStatus );
-	console.log( "\n" + "FOLLOWERS-TIMELINE\n" );
-	console.log( NewStatus );
-	MASTODON_POST_STATUS( wMastadonFollowerClient , NewStatus );
+	return new Promise( async function( resolve , reject ) {
+		try {
+			const NewStatus = await FORMAT_STATUS_FOLLOWERS_TIMELINE( wStatus );
+			console.log( "\n" + "FOLLOWERS-TIMELINE\n" );
+			console.log( NewStatus );
+			await MASTODON_POST_STATUS( wMastadonFollowerClient , NewStatus );
+			resolve();
+		}
+		catch( error ) { console.log( error ); reject( error ); }
+	});
 }
 
 ( async ()=> {
 
 	wMastadonSelfClient = new Masto( MastoSelfCreds );
 	wMastadonFollowerClient = new Masto( MastoFollowerCreds );
+
+	process.on( "unhandledRejection" , function( reason , p ) {
+		var xPrps = Object.keys( reason );
+		console.log( xPrps );
+		console.error( reason , "Unhandled Rejection at Promise" , p );
+		console.trace();
+		//POST_SLACK_ERROR( reason );
+	});
+	process.on( "uncaughtException" , function( err ) {
+		console.error( err , "Uncaught Exception thrown" );
+		console.trace();
+		//POST_SLACK_ERROR( err );
+	});
 	
 	twit.stream( "user" , function( stream ) {
 		stream.on( "data" , function ( data ) {
@@ -80,7 +151,6 @@ function MASTODON_POST_FOLLOWERS_TIMELINE( wStatus ) {
 			}
 		});
 		stream.on( "end" , function ( response ) {
-			// Handle a disconnection
 			MASTODON_POST_STATUS( wMastadonSelfClient , "Twitter Feed - OFFLINE" );
 		});
 		stream.on( "destroy" , function ( response ) {
