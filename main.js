@@ -132,7 +132,7 @@ function MASTODON_POST_SELF_TIMELINE( wStatus ) {
 			console.log( "\n" + "SELF-TIMELINE\n" );
 			console.log( NewStatus );
 			await MASTODON_POST_STATUS( wMastadonSelfClient , NewStatus );
-			await SLACK_POST_MESSAGE( wStatus , "#msync" );
+			await SLACK_POST_MESSAGE( NewStatus , "#msync" );
 			resolve();
 		}
 		catch( error ) { console.log( error ); reject( error ); }
