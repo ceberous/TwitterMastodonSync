@@ -13,7 +13,7 @@ var wMastadonFollowersClient = null;
 function MASTODON_POST_STATUS( wClient , wStatus ) {
 	return new Promise( async function( resolve , reject ) {
 		try {
-			await wClient.post( "statuses" , { status: wStatus });
+			//await wClient.post( "statuses" , { status: wStatus });
 			setTimeout( function() {	
 				resolve();
 			} , 2000 );
@@ -41,7 +41,7 @@ function POST_SLACK_ERROR( wStatus ) {
 				try { wStatus = wStatus.toString(); }
 				catch( e ) { wStatus = e; }
 			}
-			await SLACK_POST_MESSAGE( wStatus , "#msync-err" );
+			//await SLACK_POST_MESSAGE( wStatus , "#msync-err" );
 			resolve();
 		}
 		catch( error ) { console.log( error ); reject( error ); }
@@ -78,16 +78,23 @@ function SCAN_TEXT_AND_RESOLVE_LINKS( wText ) {
 					wText[ i ] = await RESOLVE_LINK( wText[ i ] );
 					console.log( wText[ i ] );
 				}
-				wFinal = wFinal + wText[ i ] + " ";
+				if ( wText[ i ] !== "https://twitter.com/" ) {
+					wFinal = wFinal + wText[ i ] + " ";
+				}
 			}
 			for ( var i = 1; i < wAddonLinks.length; ++i ) {
-				const x2_idx = wAddonLinks[ i ].indexOf( "http" ); 
-				if ( x2_idx !== -1 ) {
-					console.log( "We Found a Short Link" );
-					wAddonLinks[ i ] = await RESOLVE_LINK( wAddonLinks[ i ] );
-					console.log( wAddonLinks[ i ] );
+				var xTemp = wAddonLinks[ i ].split( " " );
+				for ( var j = 0; j < xTemp.length; ++j ) {
+					const x2_idx = xTemp[ j ].indexOf( "http" ); 
+					if ( x2_idx !== -1 ) {
+						console.log( "We Found a Short Link" );
+						xTemp[ j ] = await RESOLVE_LINK( xTemp[ j ] );
+						console.log( xTemp[ j ] );
+					}
+					if ( xTemp[ j ] !== "https://twitter.com/" ) {
+						wFinal = wFinal + xTemp[ j ] + " ";
+					}
 				}
-				wFinal = wFinal + wAddonLinks[ i ] + " ";
 			}
 			resolve( wFinal );
 		}
@@ -101,12 +108,22 @@ function FORMAT_STATUS_SELF_TIMELINE( wStatus ) {
 			var finalStatus = "";
 			if ( wStatus.retweeted_status ) {
 				finalStatus = finalStatus + "@" + wStatus.retweeted_status.user.screen_name + " ";
-				const wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.retweeted_status.text );
+				var wText = null;
+				if ( wStatus.retweeted_status.extended_tweet ) {
+					wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.retweeted_status.extended_tweet.full_text );
+				}
+				else { wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.retweeted_status.text ); }
 				finalStatus = finalStatus + wText + " ";
 				finalStatus = finalStatus + TWITTER_STATUS_BASE + wStatus.retweeted_status.user.screen_name + TWITTER_STATUS_BASE_P2 + wStatus.retweeted_status.id_str;
 			}
 			else {
-				const wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.text );
+				var wText = null;
+				if ( wStatus.extended_tweet ) {
+					wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.extended_tweet.full_text );
+				}
+				else {
+					wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.text );
+				}
 				finalStatus = finalStatus + wText + " ";				
 			}
 			resolve( finalStatus );
@@ -121,13 +138,23 @@ function FORMAT_STATUS_FOLLOWERS_TIMELINE( wStatus ) {
 			var finalStatus = "";
 			if ( wStatus.retweeted_status ) {
 				finalStatus = finalStatus + "@" + wStatus.retweeted_status.user.screen_name + " ";
-				const wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.retweeted_status.text );
+				var wText = null;
+				if ( wStatus.retweeted_status.extended_tweet ) {
+					wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.retweeted_status.extended_tweet.full_text );
+				}
+				else { wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.retweeted_status.text ); }
 				finalStatus = finalStatus + wText + " ";
 				finalStatus = finalStatus + TWITTER_STATUS_BASE + wStatus.retweeted_status.user.screen_name + TWITTER_STATUS_BASE_P2 + wStatus.retweeted_status.id_str;
 			}
 			else {
 				finalStatus = finalStatus + "@" + wStatus.user.screen_name + " ";
-				const wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.text );
+				var wText = null;
+				if ( wStatus.extended_tweet ) {
+					wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.extended_tweet.full_text );
+				}
+				else {
+					wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.text );
+				}
 				finalStatus = finalStatus + wText + " ";
 				finalStatus = finalStatus + TWITTER_STATUS_BASE + wStatus.user.screen_name + TWITTER_STATUS_BASE_P2 + wStatus.id_str;
 			}
@@ -186,6 +213,7 @@ function MASTODON_POST_FOLLOWERS_TIMELINE( wStatus ) {
 	twit.stream( "user" , function( stream ) {
 		stream.on( "data" , function ( data ) {
 			if ( data.id ) {
+				//console.log( data );
 				if ( data.user.screen_name === MyTwitterUserName ) {
 					MASTODON_POST_SELF_TIMELINE( data );
 				}
