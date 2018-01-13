@@ -52,6 +52,8 @@ const resolver = require( "resolver" );
 function RESOLVE_LINK( wURL ) {
 	return new Promise( async function( resolve , reject ) {
 		try {
+			console.log( "Trying to Resolve --> " );
+			console.log( wURL );
 			resolver.resolve( wURL , function( err , url , filename , contentType ) {
 				if ( !err ) { resolve( url ); }
 				else { resolve( wURL ); }
@@ -66,16 +68,26 @@ function SCAN_TEXT_AND_RESOLVE_LINKS( wText ) {
 		try {
 			if ( !wText ) { resolve( "" ); return; }
 			var wFinal = "";
-			wText = wText.split( " " );
+			var wAddonLinks = wText.split( "\n" );
+			wText = wAddonLinks[ 0 ].split( " " );
 			for ( var i = 0; i < wText.length; ++i ) {
+				//console.log( i.toString() + ".) = " + wText[ i ] );
 				const x1_idx = wText[ i ].indexOf( "http" ); 
 				if ( x1_idx !== -1 ) {
 					console.log( "We Found a Short Link" );
-					console.log( wText[ i ] );
 					wText[ i ] = await RESOLVE_LINK( wText[ i ] );
 					console.log( wText[ i ] );
 				}
 				wFinal = wFinal + wText[ i ] + " ";
+			}
+			for ( var i = 1; i < wAddonLinks.length; ++i ) {
+				const x2_idx = wAddonLinks[ i ].indexOf( "http" ); 
+				if ( x2_idx !== -1 ) {
+					console.log( "We Found a Short Link" );
+					wAddonLinks[ i ] = await RESOLVE_LINK( wAddonLinks[ i ] );
+					console.log( wAddonLinks[ i ] );
+				}
+				wFinal = wFinal + wAddonLinks[ i ] + " ";
 			}
 			resolve( wFinal );
 		}
