@@ -1,7 +1,8 @@
 const twitter = require( "ntwitter" );
-const TwitterCreds = require( "./personal.js" ).twitter_creds;
-const twit = new twitter( TwitterCreds );
-const MyTwitterUserName = require( "./personal.js" ).twitter_username;
+const TwitterMain = require( "./personal.js" ).twitter_main;
+const twit = new twitter( TwitterMain.creds );
+const TwitterAutism = require( "./personal.js" ).twitter_autism;
+const twitAutism = new twitter( TwitterAutism.creds )
 const TWITTER_STATUS_BASE = "https://twitter.com/";
 const TWITTER_STATUS_BASE_P2 = "/status/";
 
@@ -201,6 +202,7 @@ function MASTODON_POST_FOLLOWERS_TIMELINE( wStatus ) {
 			console.log( "\n" + "FOLLOWERS-TIMELINE\n" );
 			console.log( NewStatus );
 			await MASTODON_POST_STATUS( wMastadonFollowerClient , NewStatus );
+			await SLACK_POST_MESSAGE( NewStatus , "#tfeed" );
 			resolve();
 		}
 		catch( error ) { console.log( error ); reject( error ); }
@@ -230,10 +232,30 @@ function MASTODON_POST_FOLLOWERS_TIMELINE( wStatus ) {
 		stream.on( "data" , function ( data ) {
 			if ( data.id ) {
 				//console.log( data );
-				if ( data.user.screen_name === MyTwitterUserName ) {
+				if ( data.user.screen_name === TwitterMain.username ) {
 					MASTODON_POST_SELF_TIMELINE( data );
 				}
 				else { MASTODON_POST_FOLLOWERS_TIMELINE( data ); }
+			}
+		});
+		stream.on( "end" , function ( response ) {
+			MASTODON_POST_STATUS( wMastadonSelfClient , "Twitter Feed - OFFLINE" );
+		});
+		stream.on( "destroy" , function ( response ) {
+			MASTODON_POST_STATUS( wMastadonSelfClient , "Twitter Feed - OFFLINE" );
+		});
+	});
+
+	twitAutism.stream( "user" , function( stream ) {
+		stream.on( "data" , function ( data ) {
+			if ( data.id ) {
+				//console.log( data );
+				if ( data.user.screen_name !== TwitterAutism.username ) {
+					const NewStatus = await FORMAT_STATUS_FOLLOWERS_TIMELINE( wStatus );
+					console.log( "\n" + "FOLLOWERS-TIMELINE\n" );
+					console.log( NewStatus );
+					await SLACK_POST_MESSAGE( NewStatus , "#tautism" );
+				}
 			}
 		});
 		stream.on( "end" , function ( response ) {
