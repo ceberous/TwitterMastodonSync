@@ -13,7 +13,7 @@ var wMastadonFollowersClient = null;
 function MASTODON_POST_STATUS( wClient , wStatus ) {
 	return new Promise( async function( resolve , reject ) {
 		try {
-			//await wClient.post( "statuses" , { status: wStatus });
+			await wClient.post( "statuses" , { status: wStatus });
 			setTimeout( function() {	
 				resolve();
 			} , 2000 );
@@ -41,11 +41,17 @@ function POST_SLACK_ERROR( wStatus ) {
 				try { wStatus = wStatus.toString(); }
 				catch( e ) { wStatus = e; }
 			}
-			//await SLACK_POST_MESSAGE( wStatus , "#msync-err" );
+			await SLACK_POST_MESSAGE( wStatus , "#msync-err" );
 			resolve();
 		}
 		catch( error ) { console.log( error ); reject( error ); }
 	});
+}
+
+// https://stackoverflow.com/a/14646633/9222528
+function CheckIsValidDomain(domain) { 
+    var re = new RegExp(/^((?:(?:(?:\w[\.\-\+]?)*)\w)+)((?:(?:(?:\w[\.\-\+]?){0,62})\w)+)\.(\w{2,6})$/); 
+    return domain.match(re);
 }
 
 const resolver = require( "resolver" );
@@ -55,8 +61,9 @@ function RESOLVE_LINK( wURL ) {
 			console.log( "Trying to Resolve --> " );
 			console.log( wURL );
 			resolver.resolve( wURL , function( err , url , filename , contentType ) {
-				if ( !err ) { resolve( url ); }
-				else { resolve( wURL ); }
+				if ( err ) { resolve( "fail" ); return; }
+				if ( url === wURL ) { resolve( "fail" ); return; }
+				resolve( url );
 			});
 		}
 		catch( error ) { console.log( error ); reject( error ); }
@@ -75,7 +82,16 @@ function SCAN_TEXT_AND_RESOLVE_LINKS( wText ) {
 				const x1_idx = wText[ i ].indexOf( "http" ); 
 				if ( x1_idx !== -1 ) {
 					console.log( "We Found a Short Link" );
-					wText[ i ] = await RESOLVE_LINK( wText[ i ] );
+					wText[ i ] = wText[ i ].substring( x1_idx , wText[ i ].length );
+					console.log( wText[ i ] );
+					var j11 = await RESOLVE_LINK( wText[ i ] );
+					if ( j11 === "fail" ) {
+						var j12 = wText[ i ].substring( 0 , ( wText[ i ].length - 1 ) );
+						console.log( j12 );
+						j11 = await RESOLVE_LINK( j12 );
+						if ( j11 === "fail" ) { j11 = wText[ i ]; }
+					}
+					wText[ i ] = j11;
 					console.log( wText[ i ] );
 				}
 				if ( wText[ i ] !== "https://twitter.com/" ) {
