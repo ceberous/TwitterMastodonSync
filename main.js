@@ -1,10 +1,13 @@
+// https://github.com/AvianFlu/ntwitter
 const twitter = require( "ntwitter" );
 const TwitterMain = require( "./personal.js" ).twitter_main;
-const twit = new twitter( TwitterMain.creds );
+var twit = null;
 const TwitterAutism = require( "./personal.js" ).twitter_autism;
-const twitAutism = new twitter( TwitterAutism.creds )
+var twitAutism = null;
+
 const TWITTER_STATUS_BASE = "https://twitter.com/";
 const TWITTER_STATUS_BASE_P2 = "/status/";
+
 
 const Masto = require( "mastodon" );
 const MastoSelfCreds = require( "./personal.js" ).mastodon_self_creds;
@@ -48,6 +51,61 @@ function POST_SLACK_ERROR( wStatus ) {
 		catch( error ) { console.log( error ); reject( error ); }
 	});
 }
+
+function RECONNECT_TWITTER_CLIENTS() {
+	return new Promise( function( resolve , reject ) {
+		try {
+			twit = false;
+			twitAutism = false;
+
+			twit = new twitter( TwitterMain.creds );
+			twitAutism = new twitter( TwitterAutism.creds );
+
+			twit.stream( "user" , function( stream ) {
+				stream.on( "data" , function ( data ) {
+					if ( data.id ) {
+						//console.log( data );
+						if ( data.user.screen_name === TwitterMain.username ) {
+							MASTODON_POST_SELF_TIMELINE( data );
+						}
+						else { MASTODON_POST_FOLLOWERS_TIMELINE( data ); }
+					}
+				});
+				stream.on( "end" , function ( response ) {
+					MASTODON_POST_STATUS( wMastadonSelfClient , "Twitter Feed - OFFLINE" );
+				});
+				stream.on( "destroy" , function ( response ) {
+					MASTODON_POST_STATUS( wMastadonSelfClient , "Twitter Feed - OFFLINE" );
+				});
+			});
+
+			twitAutism.stream( "user" , function( stream ) {
+				stream.on( "data" , async function ( data ) {
+					if ( data.id ) {
+						//console.log( data );
+						if ( data.user.screen_name !== TwitterAutism.username ) {
+							const NewStatus = await FORMAT_STATUS_FOLLOWERS_TIMELINE( data );
+							console.log( "\n" + "FOLLOWERS-TIMELINE\n" );
+							console.log( NewStatus );
+							await SLACK_POST_MESSAGE( NewStatus , "#tautism" );
+						}
+					}
+				});
+				stream.on( "end" , function ( response ) {
+					MASTODON_POST_STATUS( wMastadonSelfClient , "Twitter Feed - OFFLINE" );
+				});
+				stream.on( "destroy" , function ( response ) {
+					MASTODON_POST_STATUS( wMastadonSelfClient , "Twitter Feed - OFFLINE" );
+				});
+			});
+			POST_SLACK_ERROR( "reconnected twitter clients" );
+			resolve();
+		}
+		catch( error ) { console.log( error ); reject( error ); }
+	});
+}
+module.exports.reconnectTwitterClients = RECONNECT_TWITTER_CLIENTS;
+
 
 // https://stackoverflow.com/a/14646633/9222528
 function CheckIsValidDomain(domain) { 
@@ -220,50 +278,18 @@ function MASTODON_POST_FOLLOWERS_TIMELINE( wStatus ) {
 		console.log( xPrps );
 		console.error( reason , "Unhandled Rejection at Promise" , p );
 		console.trace();
+		if ( !reason ) { return; }
+		if ( reason === "Error: read ECONNRESET" ) { RECONNECT_TWITTER_CLIENTS(); }
 		POST_SLACK_ERROR( reason );
 	});
 	process.on( "uncaughtException" , function( err ) {
 		console.error( err , "Uncaught Exception thrown" );
 		console.trace();
+		if ( !err ) { return; }
+		if ( err === "Error: read ECONNRESET" ) { RECONNECT_TWITTER_CLIENTS(); }		
 		POST_SLACK_ERROR( err );
 	});
 	
-	twit.stream( "user" , function( stream ) {
-		stream.on( "data" , function ( data ) {
-			if ( data.id ) {
-				//console.log( data );
-				if ( data.user.screen_name === TwitterMain.username ) {
-					MASTODON_POST_SELF_TIMELINE( data );
-				}
-				else { MASTODON_POST_FOLLOWERS_TIMELINE( data ); }
-			}
-		});
-		stream.on( "end" , function ( response ) {
-			MASTODON_POST_STATUS( wMastadonSelfClient , "Twitter Feed - OFFLINE" );
-		});
-		stream.on( "destroy" , function ( response ) {
-			MASTODON_POST_STATUS( wMastadonSelfClient , "Twitter Feed - OFFLINE" );
-		});
-	});
-
-	twitAutism.stream( "user" , function( stream ) {
-		stream.on( "data" , function ( data ) {
-			if ( data.id ) {
-				//console.log( data );
-				if ( data.user.screen_name !== TwitterAutism.username ) {
-					const NewStatus = await FORMAT_STATUS_FOLLOWERS_TIMELINE( wStatus );
-					console.log( "\n" + "FOLLOWERS-TIMELINE\n" );
-					console.log( NewStatus );
-					await SLACK_POST_MESSAGE( NewStatus , "#tautism" );
-				}
-			}
-		});
-		stream.on( "end" , function ( response ) {
-			MASTODON_POST_STATUS( wMastadonSelfClient , "Twitter Feed - OFFLINE" );
-		});
-		stream.on( "destroy" , function ( response ) {
-			MASTODON_POST_STATUS( wMastadonSelfClient , "Twitter Feed - OFFLINE" );
-		});
-	});
-
+	RECONNECT_TWITTER_CLIENTS();
+	POST_SLACK_ERROR( "main.js ---> init() --> completed" );
 })();
