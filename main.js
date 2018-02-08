@@ -286,7 +286,8 @@ function MASTODON_POST_FOLLOWERS_TIMELINE( wStatus ) {
 		console.error( err , "Uncaught Exception thrown" );
 		console.trace();
 		if ( !err ) { return; }
-		if ( err === "Error: read ECONNRESET" ) { RECONNECT_TWITTER_CLIENTS(); }		
+		const x11 = err.toString();
+		if ( x11 === "Error: read ECONNRESET" ) { RECONNECT_TWITTER_CLIENTS(); }		
 		POST_SLACK_ERROR( err );
 	});
 	
