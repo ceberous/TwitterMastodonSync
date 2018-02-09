@@ -287,7 +287,11 @@ function MASTODON_POST_FOLLOWERS_TIMELINE( wStatus ) {
 		console.trace();
 		if ( !err ) { return; }
 		const x11 = err.toString();
-		if ( x11 === "Error: read ECONNRESET" ) { RECONNECT_TWITTER_CLIENTS(); }		
+		if ( x11 === "Error: read ECONNRESET" ) {
+			setTimeout( function() {
+				RECONNECT_TWITTER_CLIENTS();
+			} , 3000 );
+		}		
 		POST_SLACK_ERROR( err );
 	});
 	
