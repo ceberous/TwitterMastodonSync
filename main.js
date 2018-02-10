@@ -68,7 +68,7 @@ function RECONNECT_TWITTER_CLIENTS() {
 						if ( data.user.screen_name === TwitterMain.username ) {
 							MASTODON_POST_SELF_TIMELINE( data );
 						}
-						else { MASTODON_POST_FOLLOWERS_TIMELINE( data ); }
+						else { //MASTODON_POST_FOLLOWERS_TIMELINE( data ); }
 					}
 				});
 				stream.on( "end" , function ( response ) {
