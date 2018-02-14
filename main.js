@@ -58,12 +58,16 @@ function RECONNECT_TWITTER_CLIENTS() {
 	return new Promise( async function( resolve , reject ) {
 		try {
 
+			twit.stream.destroySilent();
+			twitAutism.stream.destroySilent();
+
 			twit = false;
 			twitAutism = false;
-
 			await W_SLEEP( 3000 );
+
 			twit = null;
-			twitAutism = null;			
+			twitAutism = null;
+			await W_SLEEP( 3000 );
 
 			twit = new twitter( TwitterMain.creds );
 			twitAutism = new twitter( TwitterAutism.creds );
