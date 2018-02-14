@@ -58,16 +58,21 @@ function RECONNECT_TWITTER_CLIENTS() {
 	return new Promise( async function( resolve , reject ) {
 		try {
 
-			twit.stream.destroySilent();
-			twitAutism.stream.destroySilent();
+			if ( twit !== null ) {
+				if ( twit.stream !== null ) {
+					twit.stream.destroySilent();
+					await W_SLEEP( 1000 );
+					twit = null;
+				}
+			}
 
-			twit = false;
-			twitAutism = false;
-			await W_SLEEP( 3000 );
-
-			twit = null;
-			twitAutism = null;
-			await W_SLEEP( 3000 );
+			if ( twitAutism !== null ) {
+				if ( twitAutism.stream !== null ) {
+					twitAutism.stream.destroySilent();
+					await W_SLEEP( 3000 );
+					twitAutism = null;
+				}
+			}
 
 			twit = new twitter( TwitterMain.creds );
 			twitAutism = new twitter( TwitterAutism.creds );
