@@ -260,7 +260,7 @@ function MASTODON_POST_FOLLOWERS_TIMELINE( wStatus ) {
 			console.log( "\n" + "FOLLOWERS-TIMELINE\n" );
 			console.log( NewStatus );
 			await MASTODON_POST_STATUS( wMastadonFollowerClient , NewStatus );
-			//await SLACK_POST_MESSAGE( NewStatus , "#tfeed" );
+			await SLACK_POST_MESSAGE( NewStatus , "#tfeed" );
 			resolve();
 		}
 		catch( error ) { console.log( error ); reject( error ); }
