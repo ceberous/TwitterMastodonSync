@@ -8,6 +8,8 @@ var twitAutism = null;
 const TWITTER_STATUS_BASE = "https://twitter.com/";
 const TWITTER_STATUS_BASE_P2 = "/status/";
 
+function W_SLEEP( ms ) { return new Promise( resolve => setTimeout( resolve , ms ) ); }
+
 
 const Masto = require( "mastodon" );
 const MastoSelfCreds = require( "./personal.js" ).mastodon_self_creds;
@@ -53,10 +55,15 @@ function POST_SLACK_ERROR( wStatus ) {
 }
 
 function RECONNECT_TWITTER_CLIENTS() {
-	return new Promise( function( resolve , reject ) {
+	return new Promise( async function( resolve , reject ) {
 		try {
+
 			twit = false;
 			twitAutism = false;
+
+			await W_SLEEP( 3000 );
+			twit = null;
+			twitAutism = null;			
 
 			twit = new twitter( TwitterMain.creds );
 			twitAutism = new twitter( TwitterAutism.creds );
@@ -275,7 +282,7 @@ function MASTODON_POST_FOLLOWERS_TIMELINE( wStatus ) {
 
 	process.on( "unhandledRejection" , function( reason , p ) {
 		var xPrps = Object.keys( reason );
-		console.log( xPrps );
+		console.log( xPrps ); 
 		console.error( reason , "Unhandled Rejection at Promise" , p );
 		console.trace();
 		if ( !reason ) { return; }
