@@ -9,7 +9,7 @@ const TWITTER_STATUS_BASE = "https://twitter.com/";
 const TWITTER_STATUS_BASE_P2 = "/status/";
 
 function W_SLEEP( ms ) { return new Promise( resolve => setTimeout( resolve , ms ) ); }
-
+//function W_SLEEP( ms ) { return new Promise( resolve => setTimeout( resolve , ms ) ); }
 
 const Masto = require( "mastodon" );
 const MastoSelfCreds = require( "./personal.js" ).mastodon_self_creds;
