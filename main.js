@@ -60,17 +60,21 @@ function RECONNECT_TWITTER_CLIENTS() {
 
 			if ( twit !== null ) {
 				if ( twit.stream !== null ) {
-					twit.stream.destroySilent();
-					await W_SLEEP( 1000 );
-					twit = null;
+					if ( typeof twit.stream.destroySilent === "function" ) {
+						twit.stream.destroySilent();
+						await W_SLEEP( 1000 );
+						twit = null;
+					}
 				}
 			}
 
 			if ( twitAutism !== null ) {
 				if ( twitAutism.stream !== null ) {
-					twitAutism.stream.destroySilent();
-					await W_SLEEP( 3000 );
-					twitAutism = null;
+					if ( typeof twitAutism.stream.destroySilent === "function" ) {
+						twitAutism.stream.destroySilent();
+						await W_SLEEP( 3000 );
+						twitAutism = null;
+					}
 				}
 			}
 
