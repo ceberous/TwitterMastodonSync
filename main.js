@@ -65,6 +65,10 @@ function RECONNECT_TWITTER_CLIENTS() {
 						await W_SLEEP( 1000 );
 						twit = null;
 					}
+					else {
+						twit = null;
+						await W_SLEEP( 3000 );
+					}
 				}
 			}
 
@@ -74,6 +78,10 @@ function RECONNECT_TWITTER_CLIENTS() {
 						twitAutism.stream.destroySilent();
 						await W_SLEEP( 3000 );
 						twitAutism = null;
+					}
+					else {
+						twitAutism = null;
+						await W_SLEEP( 3000 );
 					}
 				}
 			}
