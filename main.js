@@ -317,7 +317,7 @@ function MASTODON_POST_FOLLOWERS_TIMELINE( wStatus ) {
 		const x11 = err.toString();
 		if ( x11 === "Error: read ECONNRESET" ) {
 			setTimeout( function() {
-				RECONNECT_TWITTER_CLIENTS();
+				//RECONNECT_TWITTER_CLIENTS();
 			} , 3000 );
 		}		
 		POST_SLACK_ERROR( err );
