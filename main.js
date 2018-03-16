@@ -5,6 +5,12 @@ var twit = null;
 const TwitterAutism = require( "./personal.js" ).twitter_autism;
 var twitAutism = null;
 
+const Eris = require("eris");
+var discordAutism = null;
+const discordAutismCreds = require( "./personal.js" ).DISCORD_AUTISM;
+var discordTwitter = null;
+const discordTwitterCreds = require( "./personal.js" ) .DISCORD_TWITTER;
+
 const TWITTER_STATUS_BASE = "https://twitter.com/";
 const TWITTER_STATUS_BASE_P2 = "/status/";
 
@@ -116,6 +122,7 @@ function RECONNECT_TWITTER_CLIENTS() {
 							console.log( "\n" + "FOLLOWERS-TIMELINE\n" );
 							console.log( NewStatus );
 							await SLACK_POST_MESSAGE( NewStatus , "#tautism" );
+							await discordAutism.createMessage( discordAutismCreds.channel_id , NewStatus );
 						}
 					}
 				});
@@ -275,6 +282,7 @@ function MASTODON_POST_SELF_TIMELINE( wStatus ) {
 			console.log( NewStatus );
 			await MASTODON_POST_STATUS( wMastadonSelfClient , NewStatus );
 			await SLACK_POST_MESSAGE( NewStatus , "#msync" );
+			await discordTwitter.createMessage( discordTwitterCreds.channel_id , NewStatus );
 			resolve();
 		}
 		catch( error ) { console.log( error ); reject( error ); }
@@ -300,6 +308,11 @@ function MASTODON_POST_FOLLOWERS_TIMELINE( wStatus ) {
 	wMastadonSelfClient = new Masto( MastoSelfCreds );
 	wMastadonFollowerClient = new Masto( MastoFollowerCreds );
 	bot = await new Slack( { wToken } );
+
+	discordAutism = new Eris( discordAutismCreds.token );
+	discordTwitter = new Eris( discordTwitterCreds.token );
+	await discordAutism.connect();
+	await discordTwitter.connect();
 
 	process.on( "unhandledRejection" , function( reason , p ) {
 		var xPrps = Object.keys( reason );

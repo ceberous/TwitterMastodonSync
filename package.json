@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "eris": "^0.8.5",
     "mastodon": "^1.2.1",
     "ntwitter": "^0.5.0",
     "resolver": "^0.1.12",
