@@ -224,7 +224,9 @@ function FORMAT_STATUS_SELF_TIMELINE( wStatus ) {
 				}
 				else { wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.retweeted_status.text ); }
 				finalStatus = finalStatus + wText + " ";
-				finalStatus = finalStatus + TWITTER_STATUS_BASE + wStatus.retweeted_status.user.screen_name + TWITTER_STATUS_BASE_P2 + wStatus.retweeted_status.id_str;
+				if ( !finalStatus.indexOf( "/photo/" ) ) {
+					finalStatus = finalStatus + TWITTER_STATUS_BASE + wStatus.retweeted_status.user.screen_name + TWITTER_STATUS_BASE_P2 + wStatus.retweeted_status.id_str;
+				}
 			}
 			else {
 				var wText = null;
