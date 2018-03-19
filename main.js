@@ -231,6 +231,10 @@ function FORMAT_STATUS_SELF_TIMELINE( wStatus ) {
 				wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wText );
 				wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wText );
 				finalStatus = finalStatus + wText + " ";
+				if ( !finalStatus.indexOf( "/photo/" ) ) {
+					finalStatus = finalStatus + TWITTER_STATUS_BASE + wStatus.user.screen_name + TWITTER_STATUS_BASE_P2 + wStatus.id_str;
+				}
+
 			}
 			resolve( finalStatus );
 		}
