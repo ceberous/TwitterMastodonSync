@@ -218,25 +218,19 @@ function FORMAT_STATUS_SELF_TIMELINE( wStatus ) {
 			var finalStatus = "";
 			if ( wStatus.retweeted_status ) {
 				finalStatus = finalStatus + "@" + wStatus.retweeted_status.user.screen_name + " ";
-				var wText = null;
-				if ( wStatus.retweeted_status.extended_tweet ) {
-					wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.retweeted_status.extended_tweet.full_text );
-				}
-				else { wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.retweeted_status.text ); }
+				var wText = ( wStatus.retweeted_status.extended_tweet ) ? wStatus.retweeted_status.extended_tweet.full_text : wStatus.retweeted_status.text;
+				wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wText );
+				wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wText );
 				finalStatus = finalStatus + wText + " ";
 				if ( !finalStatus.indexOf( "/photo/" ) ) {
 					finalStatus = finalStatus + TWITTER_STATUS_BASE + wStatus.retweeted_status.user.screen_name + TWITTER_STATUS_BASE_P2 + wStatus.retweeted_status.id_str;
 				}
 			}
 			else {
-				var wText = null;
-				if ( wStatus.extended_tweet ) {
-					wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.extended_tweet.full_text );
-				}
-				else {
-					wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.text );
-				}
-				finalStatus = finalStatus + wText + " ";				
+				var wText = ( wStatus.extended_tweet ) ? wStatus.extended_tweet.full_text : wStatus.text;
+				wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wText );
+				wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wText );
+				finalStatus = finalStatus + wText + " ";
 			}
 			resolve( finalStatus );
 		}
@@ -250,11 +244,9 @@ function FORMAT_STATUS_FOLLOWERS_TIMELINE( wStatus ) {
 			var finalStatus = "";
 			if ( wStatus.retweeted_status ) {
 				finalStatus = finalStatus + "@" + wStatus.retweeted_status.user.screen_name + " ";
-				var wText = null;
-				if ( wStatus.retweeted_status.extended_tweet ) {
-					wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.retweeted_status.extended_tweet.full_text );
-				}
-				else { wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.retweeted_status.text ); }
+				var wText = ( wStatus.retweeted_status.extended_tweet ) ? wStatus.retweeted_status.extended_tweet.full_text : wStatus.retweeted_status.text;
+				wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wText );
+				wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wText );
 				finalStatus = finalStatus + wText + " ";
 				if ( !finalStatus.indexOf( "/photo/" ) ) { 
 					finalStatus = finalStatus + TWITTER_STATUS_BASE + wStatus.retweeted_status.user.screen_name + TWITTER_STATUS_BASE_P2 + wStatus.retweeted_status.id_str;
@@ -262,13 +254,9 @@ function FORMAT_STATUS_FOLLOWERS_TIMELINE( wStatus ) {
 			}
 			else {
 				finalStatus = finalStatus + "@" + wStatus.user.screen_name + " ";
-				var wText = null;
-				if ( wStatus.extended_tweet ) {
-					wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.extended_tweet.full_text );
-				}
-				else {
-					wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wStatus.text );
-				}
+				var wText = ( wStatus.extended_tweet ) ? wStatus.extended_tweet.full_text : wStatus.text;
+				wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wText );
+				wText = await SCAN_TEXT_AND_RESOLVE_LINKS( wText );
 				finalStatus = finalStatus + wText + " ";
 				if ( !finalStatus.indexOf( "/photo/" ) ) {
 					finalStatus = finalStatus + TWITTER_STATUS_BASE + wStatus.user.screen_name + TWITTER_STATUS_BASE_P2 + wStatus.id_str;
