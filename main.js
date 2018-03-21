@@ -133,7 +133,7 @@ function RECONNECT_TWITTER_CLIENTS() {
 					MASTODON_POST_STATUS( wMastadonSelfClient , "Twitter Feed - OFFLINE" );
 				});
 			});
-			POST_SLACK_ERROR( "reconnected twitter clients" );
+			//POST_SLACK_ERROR( "reconnected twitter clients" );
 			resolve();
 		}
 		catch( error ) { console.log( error ); reject( error ); }
@@ -335,5 +335,5 @@ function MASTODON_POST_FOLLOWERS_TIMELINE( wStatus ) {
 	});
 	
 	RECONNECT_TWITTER_CLIENTS();
-	POST_SLACK_ERROR( "main.js ---> init() --> completed" );
+	//POST_SLACK_ERROR( "main.js ---> init() --> completed" );
 })();
