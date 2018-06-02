@@ -154,18 +154,18 @@ function RESOLVE_LINK( wURL ) {
 		try {
 			console.log( "Trying to Resolve --> " );
 			console.log( wURL );
-			var discord_remove_preview = false;
+			//var discord_remove_preview = false;
 			if ( wURL.indexOf( "&lt;" ) !== -1 ) {
 				wURL = wURL.split( "&lt;" )[ 1 ];
 			}
 			if ( wURL.indexOf( "&gt;" ) !== -1 ) {
 				wURL = wURL.split( "&gt;" )[ 0 ];
-				discord_remove_preview = true;
+				//discord_remove_preview = true;
 			}
 			resolver.resolve( wURL , function( err , url , filename , contentType ) {
 				if ( err ) { resolve( "fail" ); return; }
 				if ( url === wURL ) { resolve( "fail" ); return; }
-				if ( discord_remove_preview ) { url = "<" + url + ">"; }
+				//if ( discord_remove_preview ) { url = "<" + url + ">"; }
 				resolve( url );
 			});
 		}
