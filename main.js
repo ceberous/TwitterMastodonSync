@@ -154,6 +154,12 @@ function RESOLVE_LINK( wURL ) {
 		try {
 			console.log( "Trying to Resolve --> " );
 			console.log( wURL );
+			if ( wURL.indexOf( "&lt;" ) !== -1 ) {
+				wURL = wURL.split( "&lt;" )[ 1 ];
+			}
+			if ( wURL.indexOf( "&gt;" ) !== -1 ) {
+				wURL = wURL.split( "&gt;" )[ 0 ];
+			}
 			resolver.resolve( wURL , function( err , url , filename , contentType ) {
 				if ( err ) { resolve( "fail" ); return; }
 				if ( url === wURL ) { resolve( "fail" ); return; }
