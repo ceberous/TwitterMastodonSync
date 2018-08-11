@@ -1,21 +1,20 @@
 // https://github.com/AvianFlu/ntwitter
 const twitter = require( "ntwitter" );
-const TwitterMain = require( "./personal.js" ).twitter_main;
-var twit = null;
+// const TwitterMain = require( "./personal.js" ).twitter_main;
+// var twit = null;
 const TwitterAutism = require( "./personal.js" ).twitter_autism;
 var twitAutism = null;
 
 const Eris = require("eris");
 var discordAutism = null;
 const discordAutismCreds = require( "./personal.js" ).DISCORD_AUTISM;
-var discordTwitter = null;
-const discordTwitterCreds = require( "./personal.js" ) .DISCORD_TWITTER;
+// var discordTwitter = null;
+// const discordTwitterCreds = require( "./personal.js" ) .DISCORD_TWITTER;
 
 const TWITTER_STATUS_BASE = "https://twitter.com/";
 const TWITTER_STATUS_BASE_P2 = "/status/";
 
 function W_SLEEP( ms ) { return new Promise( resolve => setTimeout( resolve , ms ) ); }
-//function W_SLEEP( ms ) { return new Promise( resolve => setTimeout( resolve , ms ) ); }
 
 const Masto = require( "mastodon" );
 const MastoSelfCreds = require( "./personal.js" ).mastodon_self_creds;
@@ -64,19 +63,19 @@ function RECONNECT_TWITTER_CLIENTS() {
 	return new Promise( async function( resolve , reject ) {
 		try {
 
-			if ( twit !== null ) {
-				if ( twit.stream !== null ) {
-					if ( typeof twit.stream.destroySilent === "function" ) {
-						twit.stream.destroySilent();
-						await W_SLEEP( 1000 );
-						twit = null;
-					}
-					else {
-						twit = null;
-						await W_SLEEP( 3000 );
-					}
-				}
-			}
+			// if ( twit !== null ) {
+			// 	if ( twit.stream !== null ) {
+			// 		if ( typeof twit.stream.destroySilent === "function" ) {
+			// 			twit.stream.destroySilent();
+			// 			await W_SLEEP( 1000 );
+			// 			twit = null;
+			// 		}
+			// 		else {
+			// 			twit = null;
+			// 			await W_SLEEP( 3000 );
+			// 		}
+			// 	}
+			// }
 
 			if ( twitAutism !== null ) {
 				if ( twitAutism.stream !== null ) {
@@ -92,26 +91,26 @@ function RECONNECT_TWITTER_CLIENTS() {
 				}
 			}
 
-			twit = new twitter( TwitterMain.creds );
+			//twit = new twitter( TwitterMain.creds );
 			twitAutism = new twitter( TwitterAutism.creds );
 
-			twit.stream( "user" , function( stream ) {
-				stream.on( "data" , function ( data ) {
-					if ( data.id ) {
-						//console.log( data );
-						if ( data.user.screen_name === TwitterMain.username ) {
-							MASTODON_POST_SELF_TIMELINE( data );
-						}
-						else { MASTODON_POST_FOLLOWERS_TIMELINE( data ); }
-					}
-				});
-				stream.on( "end" , function ( response ) {
-					MASTODON_POST_STATUS( wMastadonSelfClient , "Twitter Feed - OFFLINE" );
-				});
-				stream.on( "destroy" , function ( response ) {
-					MASTODON_POST_STATUS( wMastadonSelfClient , "Twitter Feed - OFFLINE" );
-				});
-			});
+			// twit.stream( "user" , function( stream ) {
+			// 	stream.on( "data" , function ( data ) {
+			// 		if ( data.id ) {
+			// 			//console.log( data );
+			// 			if ( data.user.screen_name === TwitterMain.username ) {
+			// 				MASTODON_POST_SELF_TIMELINE( data );
+			// 			}
+			// 			else { MASTODON_POST_FOLLOWERS_TIMELINE( data ); }
+			// 		}
+			// 	});
+			// 	stream.on( "end" , function ( response ) {
+			// 		MASTODON_POST_STATUS( wMastadonSelfClient , "Twitter Feed - OFFLINE" );
+			// 	});
+			// 	stream.on( "destroy" , function ( response ) {
+			// 		MASTODON_POST_STATUS( wMastadonSelfClient , "Twitter Feed - OFFLINE" );
+			// 	});
+			// });
 
 			twitAutism.stream( "user" , function( stream ) {
 				stream.on( "data" , async function ( data ) {
@@ -285,20 +284,20 @@ function FORMAT_STATUS_FOLLOWERS_TIMELINE( wStatus ) {
 	});
 }
 
-function MASTODON_POST_SELF_TIMELINE( wStatus ) {
-	return new Promise( async function( resolve , reject ) {
-		try {
-			const NewStatus = await FORMAT_STATUS_SELF_TIMELINE( wStatus );
-			console.log( "\n" + "SELF-TIMELINE\n" );
-			console.log( NewStatus );
-			await MASTODON_POST_STATUS( wMastadonSelfClient , NewStatus );
-			await SLACK_POST_MESSAGE( NewStatus , "#msync" );
-			await discordTwitter.createMessage( discordTwitterCreds.channel_id , NewStatus );
-			resolve();
-		}
-		catch( error ) { console.log( error ); reject( error ); }
-	});
-}
+// function MASTODON_POST_SELF_TIMELINE( wStatus ) {
+// 	return new Promise( async function( resolve , reject ) {
+// 		try {
+// 			const NewStatus = await FORMAT_STATUS_SELF_TIMELINE( wStatus );
+// 			console.log( "\n" + "SELF-TIMELINE\n" );
+// 			console.log( NewStatus );
+// 			await MASTODON_POST_STATUS( wMastadonSelfClient , NewStatus );
+// 			await SLACK_POST_MESSAGE( NewStatus , "#msync" );
+// 			await discordTwitter.createMessage( discordTwitterCreds.channel_id , NewStatus );
+// 			resolve();
+// 		}
+// 		catch( error ) { console.log( error ); reject( error ); }
+// 	});
+// }
 
 function MASTODON_POST_FOLLOWERS_TIMELINE( wStatus ) {
 	return new Promise( async function( resolve , reject ) {
@@ -321,9 +320,9 @@ function MASTODON_POST_FOLLOWERS_TIMELINE( wStatus ) {
 	bot = await new Slack( { wToken } );
 
 	discordAutism = new Eris( discordAutismCreds.token );
-	discordTwitter = new Eris( discordTwitterCreds.token );
+	//discordTwitter = new Eris( discordTwitterCreds.token );
 	await discordAutism.connect();
-	await discordTwitter.connect();
+	//await discordTwitter.connect();
 
 	process.on( "unhandledRejection" , function( reason , p ) {
 		var xPrps = Object.keys( reason );
